@@ -172,16 +172,16 @@ class CsvToExcelConverter(object):
 
     def on_template_change(self, _event):
         template = self.template_var.get()
-        if template == "三井住友":
-            # 三井住友のテンプレートに対する処理
+        if template == "三井住友銀行":
+            # 三井住友銀行のテンプレートに対する処理
             self.encoding_select.set("shift_jis")
             self.date_select.set("1")
             self.comment_select.set("2")
             self.pay_select.set("3")
             self.csv_import(False)
             pass
-        elif template == "amazon":
-            # amazonのテンプレートに対する処理
+        elif template == "Amazon":
+            # Amazonのテンプレートに対する処理
             self.encoding_select.set("utf_8")
             self.date_select.set("1")
             self.comment_select.set("3")
@@ -302,11 +302,11 @@ class CsvToExcelConverter(object):
             frame_manip, text="フォーマット:", width=7, anchor="w"
         )
         template_label.grid(row=0, column=6, padx=2, pady=5, sticky="w")
-        self.template_var = tk.StringVar(value="三井住友")
+        self.template_var = tk.StringVar(value="三井住友銀行")
         template_select = ttk.Combobox(
             frame_manip,
             textvariable=self.template_var,
-            values=["三井住友", "amazon"],
+            values=["三井住友銀行", "Amazon"],
             width=15,
         )
         template_select.grid(row=0, column=7, padx=2, pady=5, sticky="w")
