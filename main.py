@@ -25,7 +25,7 @@ class CsvToExcelConverter(object):
 
         return super().__init__()
 
-    def format_csv(self, reader):
+    def convert_csv_to_json(self, reader):
         # CSVの1列目の日付を収集し、日付以外のデータを弾く
         dates = []
         valid_rows = []
@@ -76,28 +76,32 @@ class CsvToExcelConverter(object):
                 next(reader)
 
             # CSVデータをフォーマットしてJSON形式に変換
-            json_data = json.loads(self.format_csv(reader))
+            json_data = json.loads(self.convert_csv_to_json(reader))
 
         # Excelファイルを作成
         wb = Workbook()
         ws = wb.active
 
         # データをExcelに書き込み
-        for col_idx, key in enumerate(json_data, start=1):
-            cell = ws.cell(
-                row=1,
-                column=col_idx,
-                value=datetime.strptime(key, "%Y/%m/%d").strftime("%m/%d"),
-            )
-            for row_idx, row in enumerate(json_data[key], start=2):
+        try:
+            for col_idx, key in enumerate(json_data, start=1):
                 cell = ws.cell(
-                    row=row_idx,
+                    row=1,
                     column=col_idx,
-                    value=f"{row[int(self.pay_select.get()) - 2]}",
+                    value=datetime.strptime(key, "%Y/%m/%d").strftime("%m/%d"),
                 )
-                # コメントを追加
-                comment_text = f"{row[int(self.comment_select.get()) - 2]}"
-                cell.comment = Comment(comment_text, "GeneratedByScript")
+                for row_idx, row in enumerate(json_data[key], start=2):
+                    cell = ws.cell(
+                        row=row_idx,
+                        column=col_idx,
+                        value=f"¥{int(row[int(self.pay_select.get()) - 2]):,}",
+                    )
+                    # コメントを追加
+                    comment_text = f"{row[int(self.comment_select.get()) - 2]}"
+                    cell.comment = Comment(comment_text, "GeneratedByScript")
+        except ValueError as e:
+            self.info_label.config(text=f"日付または金額フォーマットが不正です。")
+            return
 
         # 列幅を1.2cmに設定
         for col in ws.columns:
@@ -149,9 +153,9 @@ class CsvToExcelConverter(object):
                 self.max_columns = max_columns
                 self.date_select["values"] = [str(i) for i in range(1, max_columns + 1)]
         except UnicodeDecodeError as e:
-            self.info_label.config(text=f"error: {str(e)}")
+            self.info_label.config(text=f"文字コードが不正です。")
 
-    def csv_export(self):
+    def excel_export(self):
         self.info_label.config(text="")
         if not self.csv_file:
             self.info_label.config(text="ファイルを選択していません。")
@@ -212,9 +216,9 @@ class CsvToExcelConverter(object):
         )
         import_button.grid(row=0, column=0, padx=5, pady=5, sticky="w")
 
-        # CSVエクスポートボタンを作成
+        # Excelエクスポートボタンを作成
         export_button = tk.Button(
-            frame_button, text="CSV Export", command=self.csv_export
+            frame_button, text="Excel Export", command=self.excel_export
         )
         export_button.grid(row=0, column=1, padx=5, pady=5, sticky="w")
 
@@ -245,13 +249,13 @@ class CsvToExcelConverter(object):
         header_yes.config(command=lambda: self.csv_import(False))
         header_no.config(command=lambda: self.csv_import(False))
 
-        # CSVファイル名を表示するラベルを作成
+        # 選択ラベルを作成
         file_label_title = tk.Label(frame_info, text="選択:", width=4, anchor="w")
         file_label_title.grid(row=0, column=0, padx=5, pady=1, sticky="w")
         self.file_label = tk.Label(frame_info, text="なし", width=80, anchor="w")
         self.file_label.grid(row=0, column=1, padx=0, pady=1, sticky="w")
 
-        # 情報ラベルを追加
+        # 情報ラベルを作成
         info_label_title = tk.Label(frame_info, text="情報:", width=4, anchor="w")
         info_label_title.grid(row=1, column=0, padx=5, pady=1, sticky="w")
         self.info_label = tk.Label(frame_info, text="", width=80, anchor="w", fg="red")
