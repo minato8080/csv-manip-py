@@ -1,0 +1,14 @@
+{
+  "三井住友銀行": {
+    "encoding": "shift_jis",
+    "date_col": 1,
+    "detail_col": 2,
+    "price_col": 7
+  },
+  "Amazon": {
+    "encoding": "utf_8",
+    "date_col": 1,
+    "detail_col": 3,
+    "price_col": 8
+  }
+}

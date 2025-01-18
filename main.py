@@ -19,9 +19,10 @@ class CsvToExcelConverter(object):
         self.header_var = None
         self.max_columns = 0
         self.date_select = None
-        self.pay_select = None
+        self.price_select = None
         self.comment_select = None
         self.template_var = None
+        self.properties = None
 
         return super().__init__()
 
@@ -94,7 +95,7 @@ class CsvToExcelConverter(object):
                     cell = ws.cell(
                         row=row_idx,
                         column=col_idx,
-                        value=f"¥{int(row[int(self.pay_select.get()) - 2]):,}",
+                        value=f"¥{int(row[int(self.price_select.get()) - 2]):,}",
                     )
                     # コメントを追加
                     comment_text = f"{row[int(self.comment_select.get()) - 2]}"
@@ -172,22 +173,14 @@ class CsvToExcelConverter(object):
 
     def on_template_change(self, _event):
         template = self.template_var.get()
-        if template == "三井住友銀行":
-            # 三井住友銀行のテンプレートに対する処理
-            self.encoding_select.set("shift_jis")
-            self.date_select.set("1")
-            self.comment_select.set("2")
-            self.pay_select.set("3")
+        if template in self.properties:
+            # propatiesを使用してテンプレートに対する処理
+            prop = self.properties[template]
+            self.encoding_select.set(prop["encoding"])
+            self.date_select.set(str(prop["date_col"]))
+            self.comment_select.set(str(prop["detail_col"]))
+            self.price_select.set(str(prop["price_col"]))
             self.csv_import(False)
-            pass
-        elif template == "Amazon":
-            # Amazonのテンプレートに対する処理
-            self.encoding_select.set("utf_8")
-            self.date_select.set("1")
-            self.comment_select.set("3")
-            self.pay_select.set("8")
-            self.csv_import(False)
-            pass
         else:
             # その他のテンプレートに対する処理
             pass
@@ -286,27 +279,37 @@ class CsvToExcelConverter(object):
         self.comment_select.grid(row=0, column=3, padx=2, sticky="w")
 
         # 金額ラベルを作成
-        pay_label = tk.Label(frame_manip, text="金額列:", width=5, anchor="w")
-        pay_label.grid(row=0, column=4, padx=2, pady=5, sticky="w")
-        pay_var = tk.StringVar(value="3")
-        self.pay_select = ttk.Combobox(
+        price_label = tk.Label(frame_manip, text="金額列:", width=5, anchor="w")
+        price_label.grid(row=0, column=4, padx=2, pady=5, sticky="w")
+        price_var = tk.StringVar(value="3")
+        self.price_select = ttk.Combobox(
             frame_manip,
-            textvariable=pay_var,
+            textvariable=price_var,
             values=[str(i) for i in range(1, 10)],
             width=3,
         )
-        self.pay_select.grid(row=0, column=5, padx=2, pady=5, sticky="w")
+        self.price_select.grid(row=0, column=5, padx=2, pady=5, sticky="w")
 
         # テンプレート選択ボックスを作成
+        try:
+            with open('propaties.json', 'r', encoding='utf-8') as file:
+                self.properties = json.load(file)
+            # プロパティを使用してテンプレートの選択肢を設定
+            template_options = list(self.properties.keys())
+        except FileNotFoundError:
+            # ファイルが存在しない場合のデフォルト設定
+            self.properties = {}
+            template_options = ["デフォルト"]
+
         template_label = tk.Label(
             frame_manip, text="フォーマット:", width=7, anchor="w"
         )
         template_label.grid(row=0, column=6, padx=2, pady=5, sticky="w")
-        self.template_var = tk.StringVar(value="三井住友銀行")
+        self.template_var = tk.StringVar(value=template_options[0])
         template_select = ttk.Combobox(
             frame_manip,
             textvariable=self.template_var,
-            values=["三井住友銀行", "Amazon"],
+            values=template_options,
             width=15,
         )
         template_select.grid(row=0, column=7, padx=2, pady=5, sticky="w")
